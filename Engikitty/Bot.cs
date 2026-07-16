@@ -6,6 +6,10 @@
  
 */
 
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using Engikitty.Bot;
 using Engikitty.Commands;
 using NetCord;
@@ -176,7 +180,7 @@ namespace Engikitty
         try
         {
           string PortStr = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-	  int.TryParse(PortStr, out int Port)
+          int.TryParse(PortStr, out int Port);
 
           TcpListener Listener = new(IPAddress.Any, Port);
           Listener.Start();
@@ -205,13 +209,13 @@ namespace Engikitty
             }
             catch (Exception Ex)
             {
-              if (Debug) Logger.Error($"[Web Server Error]: {Ex.Message}");
+              Logger.Error($"[Web Server]: {Ex.Message}");
             }
           }
         }
         catch (Exception CriticalEx)
         {
-          Logger.Error($"[Web Server CRITICAL]: Could not run dummy server:\n{CriticalEx}");
+          Logger.Error($"[Web Server]: Could not run dummy server:\n{CriticalEx}");
         }
       });
     }
