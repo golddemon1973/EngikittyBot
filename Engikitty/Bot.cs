@@ -156,12 +156,64 @@ namespace Engikitty
       Logger.Log("Loaded Engikitty!");
 
       // Done!!
+
+      if (Environment.GetEnvironmentVariable("PORT") != null)
+      {
+        StartDummyServer();
+      }
       
       await BotClient.StartAsync();
 
       Logger.Log("Everything loaded successfully :3");
       
       await Task.Delay(-1);
+    }
+    
+    private static void StartDummyServer()
+    {
+      Task.Run(() =>
+      {
+        try
+        {
+          string PortStr = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+	  int.TryParse(PortStr, out int Port)
+
+          TcpListener Listener = new(IPAddress.Any, Port);
+          Listener.Start();
+
+          Logger.Log($"[Web Server] Dummy server listening on port {Port}");
+
+          while (true)
+          {
+            try
+            {
+              using TcpClient Client = Listener.AcceptTcpClient();
+              using NetworkStream Stream = Client.GetStream();
+
+              byte[] Buffer = new byte[1024];
+              
+              _ = Stream.Read(Buffer, 0, Buffer.Length);
+
+              string Response = "HTTP/1.1 200 OK\r\n" +
+                                "Content-Type: text/plain\r\n" +
+                                "Connection: close\r\n" +
+                                "Content-Length: 12\r\n\r\n" +
+                                "Bot is alive!";
+                                
+              byte[] ResponseBytes = Encoding.UTF8.GetBytes(Response);
+              Stream.Write(ResponseBytes, 0, ResponseBytes.Length);
+            }
+            catch (Exception Ex)
+            {
+              if (Debug) Logger.Error($"[Web Server Error]: {Ex.Message}");
+            }
+          }
+        }
+        catch (Exception CriticalEx)
+        {
+          Logger.Error($"[Web Server CRITICAL]: Could not run dummy server:\n{CriticalEx}");
+        }
+      });
     }
   }
 }
