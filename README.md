@@ -7,7 +7,7 @@ So, with my newly acquired magical C# powers I decided to make my own bot, and s
 
 ## About the bot
 
-This bot is ran using [NetCord](https://github.com/NetCordDev/NetCord) and tightly optimized code to run on small systems. Though, it's still messy as I made it in a rush. (Will organize it in newer releases)\
+This bot runs using [NetCord](https://github.com/NetCordDev/NetCord) and tightly optimized code to run on small systems. Though, it's still messy as I made it in a rush. (Will organize it in newer releases)\
 It also uses the [Neon Postsgre Database](https://neon.com)!
 
 <img width="240" height="240" alt="whateverthatMONSTERis" src="https://github.com/user-attachments/assets/f9ec2e4c-ae93-4aea-9c4b-6330d6032695" />
@@ -21,7 +21,7 @@ There are two ways of using this bot:
 ### Server
 
 This bot was MADE to be ran on a server, and it is easy to do so.\
-For example, you can use Render to host it, thought it is paid unless you use the Website worker with a few not very legal hacky hacks.
+For example, you can use Render to host it, though it is paid unless you use the Website worker with a few not very legal hacky hacks.
 
 **If you want to do some tweaks..**
 
