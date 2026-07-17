@@ -1,29 +1,73 @@
-﻿using System.Text;
+﻿/*
+
+  Code is property of @youraveragekitty on Discord.
+
+  Redistribution that does not follow the "BSD 3-Clause" License protecting the EngikittyBot project is not allowed.
+
+*/
+
+using System.Text;
 using System.Text.Json;
-using Engikitty.Commands;
+using Engikitty.Types;
 using NetCord;
-using NetCord.Services.ApplicationCommands;
 using NetCord.Rest;
+using NetCord.Services.ApplicationCommands;
 
-namespace Engikitty.Commands
+namespace Engikitty.Bot.Library
 {
-    public class CommandInfo
+    public static class General
     {
-        public readonly bool IsEphemeral;
-        public readonly bool IsHeavy;
-
-        public CommandInfo(bool IsEphemeral = false, bool IsHeavy = false)
+        public static string GetFullCommandName(SlashCommandInteraction AppCmdInteraction)
         {
-            this.IsEphemeral = IsEphemeral;
-            this.IsHeavy = IsHeavy;
+            SlashCommandInteractionData Data = AppCmdInteraction.Data;
+            string Name = Data.Name;
+
+            if (Data.Options is { Count: > 0 } Options)
+            {
+                ApplicationCommandInteractionDataOption FirstOption = Options[0];
+
+                if (FirstOption.Type == ApplicationCommandOptionType.SubCommandGroup)
+                {
+                    Name += $" {FirstOption.Name}";
+
+                    if (FirstOption.Options is { Count: > 0 } SubOptions &&
+                        SubOptions[0].Type == ApplicationCommandOptionType.SubCommand)
+                    {
+                        Name += $" {SubOptions[0].Name}";
+                    }
+                }
+                else if (FirstOption.Type == ApplicationCommandOptionType.SubCommand)
+                {
+                    Name += $" {FirstOption.Name}";
+                }
+            }
+
+            return Name;
+        }
+
+        public static CommandInfo GetCommandInfo(ApplicationCommandInteraction AppCmdInteraction)
+        {
+            string CommandName = AppCmdInteraction switch
+            {
+                SlashCommandInteraction Slash => GetFullCommandName(Slash),
+                _ => AppCmdInteraction.Data.Name
+            };
+
+            if (!Info.Commands.TryGetValue(CommandName, out CommandInfo? CmdInfo))
+            {
+                Logger.Error($"Couldn't find command info for command '{CommandName}'...");
+                throw new ArgumentNullException(nameof(CommandName));
+            }
+
+            return CmdInfo;
         }
     }
 
-    file static class CommandUtilities
+    public static class Commands
     {
         #region 8Ball
 
-        public static string[] EightBallResponses =
+        public static readonly string[] EightBallResponses =
         [
             "we are so back",
             "let him cook",
@@ -48,9 +92,9 @@ namespace Engikitty.Commands
             "the amazing digital footprint",
             "don't look behind you",
         ];
-        
+
         #endregion
-        
+
         #region BadTranslate
 
         private static readonly string[] LanguagePool =
@@ -404,7 +448,7 @@ namespace Engikitty.Commands
 
         public static async Task DoBadTranslate(string Text, int Times, IApplicationCommandContext Context)
         {
-            Dictionary<string, string> BadTranslated = await CommandUtilities.BadTranslate(Text, Times);
+            Dictionary<string, string> BadTranslated = await BadTranslate(Text, Times);
 
             await Context.Interaction.ModifyResponseAsync(Message =>
             {
@@ -440,7 +484,7 @@ namespace Engikitty.Commands
 
         public static async Task DoMessageBadTranslate(string Text, int Times, IApplicationCommandContext Context)
         {
-            Dictionary<string, string> BadTranslated = await CommandUtilities.BadTranslate(Text, Times);
+            Dictionary<string, string> BadTranslated = await BadTranslate(Text, Times);
 
             await Context.Interaction.ModifyResponseAsync(Message =>
             {
@@ -557,133 +601,5 @@ namespace Engikitty.Commands
         }
 
         #endregion
-    }
-
-    [SlashCommand("bot", "All sorts of tools regarding engikitty itself",
-        Contexts = [InteractionContextType.Guild, InteractionContextType.DMChannel])]
-    public class BotModule : ApplicationCommandModule<ApplicationCommandContext>
-    {
-        [SubSlashCommand("ping", "Returns the bot's ping")]
-        public async Task Ping()
-        {
-            await Context.Interaction.ModifyResponseAsync(Message =>
-            {
-                Message.Embeds =
-                [
-                    new EmbedProperties()
-                    {
-                        Thumbnail = new EmbedThumbnailProperties(
-                            "https://cdn.discordapp.com/attachments/1505301024443994263/1525883632714121226/throwbrick.gif?ex=6a55015f&is=6a53afdf&hm=dbf99c0e10bb0f93932e8fce83180c6c2f507637477056c9555e46d00fec52eb&"),
-                        Title = "Pong!!",
-                        Description = $"Latency is {Context.Client.Latency.TotalMilliseconds}ms",
-                        Color = new Color(46, 111, 64),
-                        Timestamp = DateTimeOffset.UtcNow,
-                    }
-                ];
-            });
-        }
-    }
-
-    [SlashCommand("fun", "Alot of stuff for fun, probably?",
-        Contexts = [InteractionContextType.Guild, InteractionContextType.DMChannel])]
-    public class FunModule : ApplicationCommandModule<ApplicationCommandContext>
-    {
-        [SubSlashCommand("badtranslate", "Translate something. But like a lot.")]
-        public async Task BadTranslate(
-            [SlashCommandParameter(Name = "text", Description = "The text to translate", MaxLength = 768)]
-            string Text,
-            [SlashCommandParameter(Name = "loops", Description = "Times to loop", MinValue = 1, MaxValue = 100)]
-            int Times = 5)
-        {
-            await CommandUtilities.DoBadTranslate(Text, Times, Context);
-        }
-
-        [SubSlashCommand("8ball", "Ask the 8 ball a question.")]
-        public async Task Ask8Ball(
-            [SlashCommandParameter(Name = "question", Description = "The question to ask the 8Ball", MaxLength = 1024)] string Question)
-        {
-            string Answer = CommandUtilities.EightBallResponses[new Random().Next(CommandUtilities.EightBallResponses.Length)];
-            
-            await Context.Interaction.ModifyResponseAsync(Message =>
-            {
-                Message.Embeds =
-                [
-                    new EmbedProperties()
-                    {
-                        Thumbnail = new EmbedThumbnailProperties(
-                            "https://cdn.discordapp.com/attachments/1505301024443994263/1526178240568229958/bleh.jpg?ex=6a5613bf&is=6a54c23f&hm=ea363ec0295c9090ccdefbafa73d3a015b4a54ece56661665750e21e4bd5ea3b&"),
-                        Title = "Done!!",
-                        Description = "THE FUCKASS 8BALL HAS SPOKEN",
-                        Fields = new List<EmbedFieldProperties>()
-                        {
-                            new()
-                            {
-                                Name = "Question",
-                                Value = Question,
-                                Inline = false,
-                            },
-
-                            new()
-                            {
-                                Name = "Answer",
-                                Value = Answer,
-                            }
-                        },
-                        Color = new Color(46, 111, 64),
-                        Timestamp = DateTimeOffset.UtcNow,
-                    }
-                ];
-            });
-        }
-    }
-
-    public class ContextModule : ApplicationCommandModule<ApplicationCommandContext>
-    {
-        [MessageCommand("Bad Translate (5 times)",
-            Contexts = [InteractionContextType.Guild, InteractionContextType.DMChannel],
-            IntegrationTypes = [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall])]
-        public async Task BadTranslate5(RestMessage Msg)
-        {
-            await CommandUtilities.DoMessageBadTranslate(Msg.Content, 5, Context);
-        }
-
-        [MessageCommand("Bad Translate (10 times)",
-            Contexts = [InteractionContextType.Guild, InteractionContextType.DMChannel],
-            IntegrationTypes = [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall])]
-        public async Task BadTranslate10(RestMessage Msg)
-        {
-            await CommandUtilities.DoMessageBadTranslate(Msg.Content, 10, Context);
-        }
-
-        [MessageCommand("Bad Translate (20 times)",
-            Contexts = [InteractionContextType.Guild, InteractionContextType.DMChannel],
-            IntegrationTypes = [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall])]
-        public async Task BadTranslate20(RestMessage Msg)
-        {
-            await CommandUtilities.DoMessageBadTranslate(Msg.Content, 20, Context);
-        }
-    }
-}
-
-namespace Engikitty.Bot
-{
-    public static class Info
-    {
-        public static readonly Dictionary<string, CommandInfo> Commands = new()
-        {
-            // Bot
-            ["bot ping"] = new(),
-            
-            // Fun
-            
-            ["fun badtranslate"] = new(false, true),
-            ["fun 8ball"] = new(),
-            
-            // Contextual
-            
-            ["Bad Translate (5 times)"] = new(false, true),
-            ["Bad Translate (10 times)"] = new(false, true),
-            ["Bad Translate (20 times)"] = new(false, true),
-        };
     }
 }
