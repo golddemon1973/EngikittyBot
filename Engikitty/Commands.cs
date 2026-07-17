@@ -21,6 +21,36 @@ namespace Engikitty.Commands
 
     file static class CommandUtilities
     {
+        #region 8Ball
+
+        public static string[] EightBallResponses =
+        [
+            "we are so back",
+            "let him cook",
+            "real",
+            "it is so over",
+            "NEVER let them cook again",
+            "bro is DELUSIONAL",
+            "believe it or not you're going straight to jail",
+            "no i dont think so",
+            "understandable have a great day",
+            "sure grandma lets get you to bed",
+            "yes",
+            "no",
+            "yes my love",
+            "no you fucking whore",
+            "maya E, maya O, maya A",
+            "idk ask that guy next door",
+            "The Leading Ladies of Entertainment is an annual event organized by the Latin Recording Academy, the body that also distributes the Latin Grammy Awards, at which awards are presented to women excelling in the arts and sciences, and who have made indelible impressions and contributions to the Latin entertainment industry.",
+            "ABSOLUTELY NOT",
+            "absolutely my dear",
+            "whatever you say",
+            "the amazing digital footprint",
+            "don't look behind you",
+        ];
+        
+        #endregion
+        
         #region BadTranslate
 
         private static readonly string[] LanguagePool =
@@ -421,7 +451,7 @@ namespace Engikitty.Commands
                         Thumbnail = new EmbedThumbnailProperties(
                             "https://cdn.discordapp.com/attachments/1505301024443994263/1526178240568229958/bleh.jpg?ex=6a5613bf&is=6a54c23f&hm=ea363ec0295c9090ccdefbafa73d3a015b4a54ece56661665750e21e4bd5ea3b&"),
                         Title = "Done!!",
-                        Description = "Engikitty hit the text, but not that hard. It'll likely be fine.",
+                        Description = "Engikitty hit the text a bunch. I have no idea how bad this is gonna be.",
                         Fields = new List<EmbedFieldProperties>()
                         {
                             new()
@@ -567,6 +597,44 @@ namespace Engikitty.Commands
         {
             await CommandUtilities.DoBadTranslate(Text, Times, Context);
         }
+
+        [SubSlashCommand("8ball", "Ask the 8 ball a question.")]
+        public async Task Ask8Ball(
+            [SlashCommandParameter(Name = "question", Description = "The question to ask the 8Ball", MaxLength = 1024)] string Question)
+        {
+            string Answer = CommandUtilities.EightBallResponses[new Random().Next(CommandUtilities.EightBallResponses.Length)];
+            
+            await Context.Interaction.ModifyResponseAsync(Message =>
+            {
+                Message.Embeds =
+                [
+                    new EmbedProperties()
+                    {
+                        Thumbnail = new EmbedThumbnailProperties(
+                            "https://cdn.discordapp.com/attachments/1505301024443994263/1526178240568229958/bleh.jpg?ex=6a5613bf&is=6a54c23f&hm=ea363ec0295c9090ccdefbafa73d3a015b4a54ece56661665750e21e4bd5ea3b&"),
+                        Title = "Done!!",
+                        Description = "THE FUCKASS 8BALL HAS SPOKEN",
+                        Fields = new List<EmbedFieldProperties>()
+                        {
+                            new()
+                            {
+                                Name = "Question",
+                                Value = Question,
+                                Inline = false,
+                            },
+
+                            new()
+                            {
+                                Name = "Answer",
+                                Value = Answer,
+                            }
+                        },
+                        Color = new Color(46, 111, 64),
+                        Timestamp = DateTimeOffset.UtcNow,
+                    }
+                ];
+            });
+        }
     }
 
     public class ContextModule : ApplicationCommandModule<ApplicationCommandContext>
@@ -584,7 +652,7 @@ namespace Engikitty.Commands
             IntegrationTypes = [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall])]
         public async Task BadTranslate10(RestMessage Msg)
         {
-            await CommandUtilities.DoMessageBadTranslate(Msg.Content, 20, Context);
+            await CommandUtilities.DoMessageBadTranslate(Msg.Content, 10, Context);
         }
 
         [MessageCommand("Bad Translate (20 times)",
@@ -603,8 +671,16 @@ namespace Engikitty.Bot
     {
         public static readonly Dictionary<string, CommandInfo> Commands = new()
         {
+            // Bot
             ["bot ping"] = new(),
+            
+            // Fun
+            
             ["fun badtranslate"] = new(false, true),
+            ["fun 8ball"] = new(),
+            
+            // Contextual
+            
             ["Bad Translate (5 times)"] = new(false, true),
             ["Bad Translate (10 times)"] = new(false, true),
             ["Bad Translate (20 times)"] = new(false, true),

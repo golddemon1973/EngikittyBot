@@ -202,7 +202,7 @@ namespace Engikitty
                                 "Content-Type: text/plain\r\n" +
                                 "Connection: close\r\n" +
                                 "Content-Length: 12\r\n\r\n" +
-                                "Bot is alive!";
+                                "meow";
                                 
               byte[] ResponseBytes = Encoding.UTF8.GetBytes(Response);
               Stream.Write(ResponseBytes, 0, ResponseBytes.Length);
