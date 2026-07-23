@@ -1,0 +1,6 @@
+services:
+  engikitty:
+    build: ./Engikitty
+    restart: unless-stopped
+    env_file:
+      - .env
