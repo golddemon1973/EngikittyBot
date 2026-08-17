@@ -89,11 +89,11 @@ namespace Engikitty
                         try
                         {
                             if (UserInteraction is not ApplicationCommandInteraction AppCmdInteraction) return;
-
-                            bool IsOnCooldown = await CooldownHandler.DoCooldown(AppCmdInteraction, UserInteraction);
-                            if (IsOnCooldown) return;
-
+                            
                             CommandInfo CmdInfo = Bot.Library.General.GetCommandInfo(AppCmdInteraction);
+
+                            bool IsOnCooldown = await CooldownHandler.DoCooldown(AppCmdInteraction, UserInteraction, CmdInfo);
+                            if (IsOnCooldown) return;
 
                             await UserInteraction.SendResponseAsync(InteractionCallback.DeferredMessage(
                                 CmdInfo.IsEphemeral ? MessageFlags.Ephemeral : null));

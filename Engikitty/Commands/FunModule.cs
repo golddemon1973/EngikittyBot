@@ -78,5 +78,13 @@ namespace Engikitty.Commands
                 ];
             });
         }
+
+        [SubSlashCommand("ask-engikitty", "Ask Engikitty a question.")]
+        public async Task AskEngikitty(
+            [SlashCommandParameter(Name = "question", Description = "The question to ask the 8Ball", MaxLength = 1024)]
+            string Question)
+        {
+            await Bot.Library.Commands.PromptGroq(Question, Context);
+        }
     }
 }

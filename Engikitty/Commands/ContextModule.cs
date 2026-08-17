@@ -49,5 +49,12 @@ namespace Engikitty.Commands
         {
             await Bot.Library.Commands.DoMessageBadTranslate(Msg.Content, 20, Context);
         }
+        
+        [MessageCommand("Engikitty Reply",
+            Contexts = [InteractionContextType.Guild, InteractionContextType.DMChannel])]
+        public async Task EngikittyReply(RestMessage Msg)
+        {
+            await Bot.Library.Commands.PromptGroq(Msg.Content, Context);
+        }
     }
 }

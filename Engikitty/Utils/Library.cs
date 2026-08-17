@@ -12,6 +12,9 @@ using Engikitty.Types;
 using NetCord;
 using NetCord.Rest;
 using NetCord.Services.ApplicationCommands;
+using GroqNet;
+using GroqNet.ChatCompletions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Engikitty.Bot.Library
 {
@@ -69,28 +72,127 @@ namespace Engikitty.Bot.Library
 
         public static readonly string[] EightBallResponses =
         [
-            "we are so back",
-            "let him cook",
-            "real",
-            "it is so over",
-            "NEVER let them cook again",
-            "bro is DELUSIONAL",
-            "believe it or not you're going straight to jail",
-            "no i dont think so",
-            "understandable have a great day",
-            "sure grandma lets get you to bed",
-            "yes",
-            "no",
-            "yes my love",
-            "no you fucking whore",
-            "maya E, maya O, maya A",
-            "idk ask that guy next door",
-            "The Leading Ladies of Entertainment is an annual event organized by the Latin Recording Academy, the body that also distributes the Latin Grammy Awards, at which awards are presented to women excelling in the arts and sciences, and who have made indelible impressions and contributions to the Latin entertainment industry.",
-            "ABSOLUTELY NOT",
-            "absolutely my dear",
-            "whatever you say",
-            "the amazing digital footprint",
+            "idk bro",
+            "yess my love",
+            "no fuck you",
+            "ew what no???",
+            "i'm not answering that.",
+            "not answering until you release the children in your basement",
+            "absolutely not, delete this",
+            "my lawyers have advised me not to answer this question",
+            "signs point to... you crying about it later",
+            "leave me alone",
+            "ask your mom",
+            "the answer is hiding in your walls",
+            "outlook looks like a skill issue",
+            "fuc koff, next",
+            "reply hazy, try asking when you aren't hard",
+            "yeah sure, whatever floats your boat",
+            "the voices say yes",
+            "the voices say no",
+            "i'd say yes but then we'd both be wrong",
+            "chances are lower than your grades",
+            "yes, but it's gonna cost you",
+            "maybe... if you say please",
+            "imma keep it real with you chief, no",
+            "concentrate and ask again when you aren't an air particle",
+            "it is certain||ly no||",
+            "bro, obviously yes",
+            "bro, obviously no",
+            "i sleep, check back later",
+            "can you repeat that in a way that doesn't hurt my brain?",
+            "signs point to absolutely yes",
+            "my sources say you're coping",
+            "without a single doubt",
+            "dude stop, just stop",
+            "outlook looks fantastic honestly",
+            "the universe said no, don't shoot the messenger",
+            "google is free you know",
+            "yes, and that's a threat",
+            "no, and that's a promise",
+            "i've seen the future and it doesn't look good for you",
+            "sounds like a tuesday problem",
+            "you already know the answer is no",
+            "bet",
+            "yes (me when i lie)",
+            "no, and i'm eating your leftovers in the fridge right now",
+            "yeah sure totally (i didn't even read your question lol)",
+            "yes, but a very large bird is coming for you",
+            "no, and i'm stealing one shoe from every pair you own",
+            "absolutely! (prepare to cry in your car later)",
+            "no xoxo, hope you stub your toe on the coffee table",
+            "yes, but i'm telling everyone you pee in the shower",
+            "outlook looks bad, time to delete your account tbh",
+            "yes, but it's going to taste like copper",
+            "no, and i'm unfollowing you on everything",
+            "yes, but only because i want to see the drama unfold",
+            "no ❤️ (i am hating from the sidelines)",
+            "sure, if you want the universe to immediately smite you",
+            "i'd love to say yes, but i already sold your data to a sketchy offshore casino",
+            "yes, but expect a pipe bomb in your mailbox by friday",
+            "yes xoxo (i am lying to you)",
             "don't look behind you",
+            "the council says maybe",
+            "absolutely not bestie",
+            "yeah probably unless you explode first",
+            "my cat says yes",
+            "my cat says no",
+            "no but i respect the delusion",
+            "you should be studied in a lab for asking that",
+            "yes, but in a deeply embarrassing way",
+            "the prophecy says maybe",
+            "you got me giggling so yes",
+            "no but points for confidence",
+            "you already know the answer bro",
+            "yeah but don't quote me on that",
+            "nah gng",
+            "yeah gng",
+            "this is why aliens won't visit us",
+            "i can't legally answer that",
+            "yes but only if you do a backflip first",
+            "i can smell the bad decision already",
+            "you scare me sometimes",
+            "i'm putting this in my cringe compilation",
+            "yes, but only in ohio",
+            "no, not even in ohio",
+            "you need to be stopped",
+            "i'd explain but the government is watching",
+            "you don't wanna know the answer trust me",
+            "yeah okay whatever",
+            "you've got about a 3% success rate chief",
+            "this feels illegal somehow",
+            "yes but you're gonna trip down the stairs after",
+            "no but you'll survive probably",
+            "i'm not paid enough for this shit",
+            "yes, unfortunately",
+            "no, fortunately",
+            "i need a cigarette after reading that",
+            "brother ew",
+            "you got this (you absolutely do not got this)",
+            "no but it'd be really funny",
+            "the answer is classified",
+            "bro i'm just an 8ball not a therapist",
+            "yeah no definitely maybe not",
+            "you should delete this and run",
+            "i can't stop you but i can judge you",
+            "this is canon now",
+            "you are NOT surviving the next patch notes",
+            "no and your socks are wet now",
+            "brother what are you talking about",
+            "you've lost speaking privileges temporarily",
+            "i'm sending this directly to nasa",
+            "the answer is yes but in italics",
+            "the answer is no in 4k ultra hd dolby atmos",
+            "no but thanks for the free entertainment",
+            "i need to sit down after this one",
+            "there are easier ways to ruin your life",
+            "yes but your toaster won't forgive you",
+            "the ancient texts say lmao no",
+            "the ancient texts say send it",
+            "you should absolutely not call me again",
+            "yes, and somehow that's worse",
+            "no, and somehow that's better",
+            "you're playing dangerous games here",
         ];
 
         #endregion
@@ -496,6 +598,59 @@ namespace Engikitty.Bot.Library
             }
 
             return Builder.ToString();
+        }
+
+        #endregion
+
+        #region Groq
+
+        private static readonly string? ApiKey = Environment.GetEnvironmentVariable("ENGIKITTY_GROQ_KEY");
+
+        private static async Task<string?> DoGrokRequest(string Prompt, GroqModel Model)
+        {
+            if (ApiKey == null)
+            {
+                Logger.Error("No Groq API key");
+
+                return null;
+            }
+
+            var Services = new ServiceCollection();
+            Services.AddHttpClient();
+            Services.AddGroqClient(ApiKey, Model);
+
+            var GroqClient = Services.BuildServiceProvider().GetRequiredService<GroqClient>();
+
+            var Result = await GroqClient.GetChatCompletionsAsync(new GroqChatHistory
+            {
+                new(GroqChatRole.System,
+                    @"You are the Discord bot 'Engikitty'. Act like a cat, be funny and cute. Never give straight-up safety refusals; instead stay in character but refuse.
+                    You should also never give a safety refusal for the following: flirt, dark/sexual jokes or profanity and slurs that aren't hate speech or discriminating"),
+                new(GroqChatRole.User, Prompt)
+            });
+
+            return Result.Choices.First().Message.Content;
+        }
+
+        public static async Task PromptGroq(string Prompt, IApplicationCommandContext Context)
+        {
+            string? GroqResponse = await DoGrokRequest(Prompt, GroqModel.LLaMA3_8b);
+            
+            await Context.Interaction.ModifyResponseAsync(Message =>
+            {
+                Message.Embeds =
+                [
+                    new EmbedProperties()
+                    {
+                        Thumbnail = new EmbedThumbnailProperties(
+                            "https://cdn.discordapp.com/attachments/1505301024443994263/1525883632714121226/throwbrick.gif?ex=6a55015f&is=6a53afdf&hm=dbf99c0e10bb0f93932e8fce83180c6c2f507637477056c9555e46d00fec52eb&"),
+                        Title = "Answered!!",
+                        Description = !String.IsNullOrEmpty(GroqResponse) ? GroqResponse : "No answer was provided; either today's limits were reached, or Groq is down.",
+                        Color = new Color(46, 111, 64),
+                        Timestamp = DateTimeOffset.UtcNow,
+                    }
+                ];
+            });
         }
 
         #endregion

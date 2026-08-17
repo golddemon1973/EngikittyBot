@@ -7,55 +7,84 @@
 */
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using Engikitty.Types;
 using NetCord;
 using NetCord.Rest;
 
 namespace Engikitty.Handlers
 {
+    public class UserCooldowns()
+    {
+        public long GlobalCooldown;
+        public Dictionary<CommandInfo, long> Cooldowns = new();
+    }
+    
     /// <summary>
     /// Handler for cooldowns
     /// </summary>
     public static class CooldownHandler
     {
-        public static readonly int CooldownDurationSeconds = 3;
+        private static readonly ConcurrentDictionary<ulong, UserCooldowns> Cooldowns = new();
 
-        private static readonly ConcurrentDictionary<ulong, long> Cooldowns = new();
+        public static async Task Reply(ApplicationCommandInteraction AppCmdInteraction, long CooldownEndsAt)
+        {
+            await AppCmdInteraction.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties()
+            {
+                Flags = MessageFlags.Ephemeral,
+                Embeds =
+                [
+                    new EmbedProperties()
+                    {
+                        Thumbnail = new EmbedThumbnailProperties(
+                            "https://cdn.discordapp.com/attachments/1505301024443994263/1525845208925868082/dizzy.jpg?ex=6a54dd96&is=6a538c16&hm=cd71842116a2e5187a9fea2720a659281b604b50dd3fbbd93aba3153fe64bc53&"),
+                        Title = "Cooldown!!",
+                        Description = $"You're going too fast! Please wait <t:{CooldownEndsAt}:R>.",
+                        Color = new Color(255, 165, 0),
+                        Timestamp = DateTimeOffset.UtcNow,
+                    }
+                ]
+            }));
+        }
 
         /// <summary>
         /// Checks if a user is on cooldown
         /// </summary>
         /// <param name="AppCmdInteraction"></param>
         /// <param name="UserInteraction"></param>
+        /// <param name="CmdInfo"></param>
         /// <returns>A bool representing if the user is on cooldown</returns>
-        public static async Task<bool> DoCooldown(ApplicationCommandInteraction AppCmdInteraction,
-            Interaction UserInteraction)
+        public static async Task<bool> DoCooldown(ApplicationCommandInteraction AppCmdInteraction, Interaction UserInteraction, CommandInfo CmdInfo)
         {
             ulong UserId = UserInteraction.User.Id;
             long CurrentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            if (Cooldowns.TryGetValue(UserId, out long CooldownEndsAt) && CooldownEndsAt > CurrentTime)
+            Cooldowns.TryGetValue(UserId, out UserCooldowns? UserCooldowns);
+
+            if (UserCooldowns == null)
             {
-                await AppCmdInteraction.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties()
-                {
-                    Flags = MessageFlags.Ephemeral,
-                    Embeds =
-                    [
-                        new EmbedProperties()
-                        {
-                            Thumbnail = new EmbedThumbnailProperties(
-                                "https://cdn.discordapp.com/attachments/1505301024443994263/1525845208925868082/dizzy.jpg?ex=6a54dd96&is=6a538c16&hm=cd71842116a2e5187a9fea2720a659281b604b50dd3fbbd93aba3153fe64bc53&"),
-                            Title = "Cooldown!!",
-                            Description = $"You're going too fast! Please wait <t:{CooldownEndsAt}:R>.",
-                            Color = new Color(255, 165, 0),
-                            Timestamp = DateTimeOffset.UtcNow,
-                        }
-                    ]
-                }));
+                UserCooldowns = new UserCooldowns();
+
+                Cooldowns.TryAdd(UserId, UserCooldowns);
+            }
+
+            if (UserCooldowns.GlobalCooldown > CurrentTime)
+            {
+                await Reply(AppCmdInteraction, UserCooldowns.GlobalCooldown);
 
                 return true;
             }
 
-            Cooldowns[UserId] = CurrentTime + CooldownDurationSeconds;
+            if (UserCooldowns.Cooldowns.TryGetValue(CmdInfo, out long LocalCooldownEndsAt) && LocalCooldownEndsAt > CurrentTime)
+            {
+                await Reply(AppCmdInteraction, LocalCooldownEndsAt);
+                    
+                return true;
+            }
+
+            UserCooldowns.GlobalCooldown = CurrentTime;
+            UserCooldowns.Cooldowns[CmdInfo] = CurrentTime;
+
             return false;
         }
     }

@@ -6,27 +6,56 @@
 
 */
 
-using Npgsql;
+using Microsoft.Data.Sqlite;
 using System.Text.Json;
 
 namespace Engikitty.Services
 {
     /// <summary>
-    /// Service regarding the Neon Postgre database
+    /// Service regarding the local SQLite database
     /// </summary>
     public static class Database
     {
-        private static readonly string ConnectionString =
-            "Host=ep-nameless-lake-asii0z56.c-4.eu-central-1.aws.neon.tech;" +
-            "Port=5432;" +
-            "Database=neondb;" +
-            "Username=neondb_owner;" +
-            $"Password={Environment.GetEnvironmentVariable("DISCORD_BOT_DATABASE_TOKEN_ENGIKITTY")};" +
-            "SSL Mode=Require;" +
-            "Trust Server Certificate=true;" +
-            "Gss Encryption Mode=Disable;";
+        private static readonly string ConnectionString = $"Data Source={Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "engikitty.db")};";
 
-        private static readonly NpgsqlDataSource DataSource = NpgsqlDataSource.Create(ConnectionString);
+        private static bool Initialized = false;
+        private static readonly SemaphoreSlim InitLock = new(1, 1);
+
+        /// <summary>
+        /// Ensures the BotStorage table exists before any read/write operation.
+        /// </summary>
+        private static async Task EnsureInitializedAsync()
+        {
+            if (Initialized)
+            {
+                return;
+            }
+
+            await InitLock.WaitAsync();
+            try
+            {
+                if (Initialized)
+                {
+                    return;
+                }
+
+                await using SqliteConnection Connection = new(ConnectionString);
+                await Connection.OpenAsync();
+
+                string Query =
+                    "CREATE TABLE IF NOT EXISTS BotStorage (Key TEXT PRIMARY KEY, Value TEXT NOT NULL);";
+
+                await using SqliteCommand Command = Connection.CreateCommand();
+                Command.CommandText = Query;
+                await Command.ExecuteNonQueryAsync();
+
+                Initialized = true;
+            }
+            finally
+            {
+                InitLock.Release();
+            }
+        }
 
         /// <summary>
         /// Write a value
@@ -35,14 +64,20 @@ namespace Engikitty.Services
         /// <param name="Value"></param>
         public static async Task WriteAsync(string Key, object Value)
         {
+            await EnsureInitializedAsync();
+
             string JsonString = JsonSerializer.Serialize(Value);
             string Query =
-                "INSERT INTO BotStorage (Key, Value) VALUES (@Key, @Value) ON CONFLICT (Key) DO UPDATE SET Value = @Value;";
+                "INSERT INTO BotStorage (Key, Value) VALUES (@Key, @Value) " +
+                "ON CONFLICT (Key) DO UPDATE SET Value = @Value;";
 
-            await using NpgsqlCommand Command = DataSource.CreateCommand(Query);
+            await using SqliteConnection Connection = new(ConnectionString);
+            await Connection.OpenAsync();
 
-            Command.Parameters.AddWithValue("Key", Key);
-            Command.Parameters.AddWithValue("Value", JsonString);
+            await using SqliteCommand Command = Connection.CreateCommand();
+            Command.CommandText = Query;
+            Command.Parameters.AddWithValue("@Key", Key);
+            Command.Parameters.AddWithValue("@Value", JsonString);
 
             await Command.ExecuteNonQueryAsync();
         }
@@ -55,13 +90,18 @@ namespace Engikitty.Services
         /// <returns></returns>
         public static async Task<T?> ReadAsync<T>(string Key)
         {
+            await EnsureInitializedAsync();
+
             string Query = "SELECT Value FROM BotStorage WHERE Key = @Key;";
 
-            await using NpgsqlCommand Command = DataSource.CreateCommand(Query);
+            await using SqliteConnection Connection = new(ConnectionString);
+            await Connection.OpenAsync();
 
-            Command.Parameters.AddWithValue("Key", Key);
+            await using SqliteCommand Command = Connection.CreateCommand();
+            Command.CommandText = Query;
+            Command.Parameters.AddWithValue("@Key", Key);
 
-            await using NpgsqlDataReader Reader = await Command.ExecuteReaderAsync();
+            await using SqliteDataReader Reader = await Command.ExecuteReaderAsync();
             if (await Reader.ReadAsync())
             {
                 string JsonString = Reader.GetString(0);
