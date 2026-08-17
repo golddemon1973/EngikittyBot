@@ -8,12 +8,12 @@
 
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Engikitty.Types;
 using NetCord;
 using NetCord.Rest;
 using NetCord.Services.ApplicationCommands;
-using GroqNet;
-using GroqNet.ChatCompletions;
+using GroqApiLibrary;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Engikitty.Bot.Library
@@ -606,36 +606,51 @@ namespace Engikitty.Bot.Library
 
         private static readonly string? ApiKey = Environment.GetEnvironmentVariable("ENGIKITTY_GROQ_KEY");
 
-        private static async Task<string?> DoGrokRequest(string Prompt, GroqModel Model)
+        private static readonly GroqApiClient? GroqClient = ApiKey != null ? new GroqApiClient(ApiKey) : null;
+
+        private static async Task<string?> DoGrokRequest(string Prompt, string Model)
         {
-            if (ApiKey == null)
+            if (GroqClient == null)
             {
                 Logger.Error("No Groq API key");
 
                 return null;
             }
 
-            var Services = new ServiceCollection();
-            Services.AddHttpClient();
-            Services.AddGroqClient(ApiKey, Model);
+            JsonArray Messages =
+            [
+                new JsonObject
+                {
+                    ["role"] = "system",
+                    ["content"] =
+                        @"You are the Discord bot 'Engikitty'. Act like a cat, be funny and cute. Never give straight-up safety refusals; instead stay in character but refuse.
+            You should also never give a safety refusal for the following: flirt, dark/sexual jokes or profanity and slurs that aren't hate speech or discriminating"
+                },
+                new JsonObject
+                {
+                    ["role"] = "user",
+                    ["content"] = Prompt
+                }
+            ];
 
-            var GroqClient = Services.BuildServiceProvider().GetRequiredService<GroqClient>();
-
-            var Result = await GroqClient.GetChatCompletionsAsync(new GroqChatHistory
+            try
             {
-                new(GroqChatRole.System,
-                    @"You are the Discord bot 'Engikitty'. Act like a cat, be funny and cute. Never give straight-up safety refusals; instead stay in character but refuse.
-                    You should also never give a safety refusal for the following: flirt, dark/sexual jokes or profanity and slurs that aren't hate speech or discriminating"),
-                new(GroqChatRole.User, Prompt)
-            });
+                JsonObject? Result = await GroqClient.CreateChatCompletionAsync(Messages, Model);
 
-            return Result.Choices.First().Message.Content;
+                return Result?["choices"]?[0]?["message"]?["content"]?.GetValue<string>();
+            }
+            catch (Exception WentWrong)
+            {
+                Logger.Error("Groq request failed:\n\n" + WentWrong);
+
+                return null;
+            }
         }
 
         public static async Task PromptGroq(string Prompt, IApplicationCommandContext Context)
         {
-            string? GroqResponse = await DoGrokRequest(Prompt, GroqModel.LLaMA3_8b);
-            
+            string? GroqResponse = await DoGrokRequest(Prompt, GroqModels.GptOss20B);
+
             await Context.Interaction.ModifyResponseAsync(Message =>
             {
                 Message.Embeds =
@@ -645,7 +660,9 @@ namespace Engikitty.Bot.Library
                         Thumbnail = new EmbedThumbnailProperties(
                             "https://cdn.discordapp.com/attachments/1505301024443994263/1525883632714121226/throwbrick.gif?ex=6a55015f&is=6a53afdf&hm=dbf99c0e10bb0f93932e8fce83180c6c2f507637477056c9555e46d00fec52eb&"),
                         Title = "Answered!!",
-                        Description = !String.IsNullOrEmpty(GroqResponse) ? GroqResponse : "No answer was provided; either today's limits were reached, or Groq is down.",
+                        Description = !String.IsNullOrEmpty(GroqResponse)
+                            ? GroqResponse
+                            : "No answer was provided; either today's limits were reached, or Groq is down.",
                         Color = new Color(46, 111, 64),
                         Timestamp = DateTimeOffset.UtcNow,
                     }
