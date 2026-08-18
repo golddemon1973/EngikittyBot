@@ -21,14 +21,14 @@ namespace Engikitty.Bot
 
             ["fun badtranslate"] = new(false, true),
             ["fun 8ball"] = new(),
-            ["fun ask-engikitty"] = new(false, true, CooldownOnThisCommand: 5),
+            ["fun ask-engikitty"] = new(false, true, CooldownOnThisCommand: 10),
 
             // Contextual
 
             ["Bad Translate (5 times)"] = new(false, true),
             ["Bad Translate (10 times)"] = new(false, true),
             ["Bad Translate (20 times)"] = new(false, true),
-            ["Engikitty Reply"] = new(false, true, CooldownOnThisCommand: 5)
+            ["Engikitty Reply"] = new(false, true, CooldownOnThisCommand: 10)
         };
     }
 }

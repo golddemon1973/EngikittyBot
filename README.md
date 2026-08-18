@@ -31,7 +31,7 @@ For example, you can use Render to host it, though it is paid unless you use the
 4. Follow the instructions on Render
 5. Add in the environment variables those:\
 "DISCORD_BOT_TOKEN_ENGIKITTY": the bot's auth token\
-"DISCORD_BOT_DATABASE_TOKEN_ENGIKITTY": the database's connection string's password
+"ENGIKITTY_GROQ_KEY": the API key that will be used for the API
 6. You're done
 
 **If you don't..**
@@ -39,7 +39,7 @@ For example, you can use Render to host it, though it is paid unless you use the
 1. Follow the instructions on Render, and link [**this repo**](https://github.com/golddemon1973/EngikittyBot)
 2. Add in the environment variables those:\
 "DISCORD_BOT_TOKEN_ENGIKITTY": the bot's auth token\
-"DISCORD_BOT_DATABASE_TOKEN_ENGIKITTY": the database's connection string's password
+"ENGIKITTY_GROQ_KEY": the API key that will be used for the API
 3. You're done
 
 ### Personal PC
@@ -47,5 +47,5 @@ For example, you can use Render to host it, though it is paid unless you use the
 1. Download [the latest release](https://www.youtube.com/watch?v=xvFZjo5PgG0)'s .exe (sorry Linux users)
 2. Add in your environment variables those:\
 "DISCORD_BOT_TOKEN_ENGIKITTY": the bot's auth token\
-"DISCORD_BOT_DATABASE_TOKEN_ENGIKITTY": the database's connection string's password
+"ENGIKITTY_GROQ_KEY": the API key that will be used for the API
 3. Run the .exe
