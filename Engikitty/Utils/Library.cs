@@ -655,7 +655,7 @@ namespace Engikitty.Bot.Library
 
             try
             {
-                GroqResponse = await DoGrokRequest(Prompt, GroqModels.GptOss20B);
+                GroqResponse = await DoGrokRequest(Prompt, GroqModels.Qwen36_27B);
             }
             catch {}
 
