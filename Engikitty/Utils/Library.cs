@@ -607,13 +607,13 @@ namespace Engikitty.Bot.Library
 
         private static readonly GroqApiClient? GroqClient = ApiKey != null ? new GroqApiClient(ApiKey) : null;
 
-        private static async Task<string?> DoGrokRequest(string Prompt, string Model)
+        private static async Task<string> DoGrokRequest(string Prompt, string Model)
         {
             if (GroqClient == null)
             {
                 Logger.Error("No Groq API key");
 
-                return null;
+                return "";
             }
 
             JsonArray Messages =
@@ -637,27 +637,32 @@ namespace Engikitty.Bot.Library
 
             try
             {
-                JsonObject? Result = await GroqClient.CreateChatCompletionAsync(Messages, Model);
+                JsonObject? Result = await GroqClient.CreateChatCompletionAsync(Messages, Model, new GroqChatOptions
+                {
+                    IncludeReasoning = false,
+                    ReasoningEffort = "none",
+                    MaxCompletionTokens = 1024,
+                });
 
-                return Result?["choices"]?[0]?["message"]?["content"]?.GetValue<string>();
+                var Res = Result?["choices"]?[0]?["message"]?["content"]?.GetValue<string>();
+                
+                Logger.Warning("Full response:\n" + Result?.ToJsonString());
+                
+                if (Res != null) return Res;
+
+                return "";
             }
             catch (Exception WentWrong)
             {
                 Logger.Error("Groq request failed:\n\n" + WentWrong);
 
-                return null;
+                return "";
             }
         }
 
         public static async Task PromptGroq(string Prompt, IApplicationCommandContext Context)
         {
-            string? GroqResponse = "";
-
-            try
-            {
-                GroqResponse = await DoGrokRequest(Prompt, GroqModels.Qwen36_27B);
-            }
-            catch {}
+            string? GroqResponse = await DoGrokRequest(Prompt, GroqModels.Qwen36_27B);;
 
             await Context.Interaction.ModifyResponseAsync(Message =>
             {

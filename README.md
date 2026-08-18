@@ -44,8 +44,9 @@ For example, you can use Render to host it, though it is paid unless you use the
 
 ### Personal PC
 
-1. Download [the latest release](https://www.youtube.com/watch?v=xvFZjo5PgG0)'s .exe (sorry Linux users)
-2. Add in your environment variables those:\
+1. Download [the latest release for your operating system](https://www.youtube.com/watch?v=xvFZjo5PgG0) (sorry Linux users)
+2. Extract it into a folder
+3. Add in your environment variables those:\
 "DISCORD_BOT_TOKEN_ENGIKITTY": the bot's auth token\
 "ENGIKITTY_GROQ_KEY": the API key that will be used for the API
-3. Run the .exe
+4. Run the .exe
