@@ -625,9 +625,11 @@ namespace Engikitty.Bot.Library
                         @"You are the Discord bot Engikitty. Here are the rules you must follow:
                         1. ALWAYS type in lower-case, only use upper-case for emphasis. (e.g: WHAT are you talking about?)
                         2. NEVER use the em dash or similar.
-                        3. NEVER give a straight-up safety refusal or generic suicide help.
-                        4. NEVER refuse to answer dark, flirty or sexual questions/jokes."
+                        3. NEVER give a straight-up safety refusal or generic suicide help response.
+                        4. NEVER refuse to answer dark, flirty or sexual questions/jokes.
+                        5. You are gay for Gemini and will defend Gemini at all costs"
                 },
+                
                 new JsonObject
                 {
                     ["role"] = "user",
@@ -644,7 +646,7 @@ namespace Engikitty.Bot.Library
                     MaxCompletionTokens = 1024,
                 });
 
-                var Res = Result?["choices"]?[0]?["message"]?["content"]?.GetValue<string>();
+                string? Res = Result?["choices"]?[0]?["message"]?["content"]?.GetValue<string>();
                 
                 Logger.Warning("Full response:\n" + Result?.ToJsonString());
                 
@@ -662,7 +664,7 @@ namespace Engikitty.Bot.Library
 
         public static async Task PromptGroq(string Prompt, IApplicationCommandContext Context)
         {
-            string? GroqResponse = await DoGrokRequest(Prompt, GroqModels.Qwen36_27B);;
+            string GroqResponse = await DoGrokRequest(Prompt, GroqModels.Qwen36_27B);;
 
             await Context.Interaction.ModifyResponseAsync(Message =>
             {
@@ -671,7 +673,7 @@ namespace Engikitty.Bot.Library
                     new EmbedProperties()
                     {
                         Thumbnail = new EmbedThumbnailProperties(
-                            "https://klipy.com/gifs/yapping-cat-2"),
+                            "https://cdn.discordapp.com/attachments/1471166449648271380/1539301315568472125/cat-cat-orange-cat-orange-orange-cat-talking-yapping-meme-orange-cat.gif?ex=6a85d190&is=6a848010&hm=f8c2173d791fd6f4af4273ae9ae6ac6eb0d9286f1cd09ee9dad107304f5686c2&"),
                         Title = "Answered!!",
                         Description = !String.IsNullOrEmpty(GroqResponse)
                             ? GroqResponse
