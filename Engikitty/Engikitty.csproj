@@ -16,7 +16,6 @@
         <ServerGarbageCollection>false</ServerGarbageCollection>
         <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
         <PublishSingleFile>true</PublishSingleFile>
-        <SelfContained>true</SelfContained>
         <RootNamespace>Engikitty</RootNamespace>
         <AssemblyName>Engikitty</AssemblyName>
         <NoWarn>CS1591</NoWarn>
